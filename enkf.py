@@ -10,12 +10,12 @@ class EnsembleKalmanFilter:
         The Ensemble Kalman Filter for Inverse Problems.
         doi:10.1088/0266-5611/29/4/045001
 
-        :param maxit: int, maximum number of iterations
-        :param n_batches, int,  number of batches to used in mini-batch. If set
-            to `1` uses the whole given dataset. Default is `1`.
-        :param online, bool, True if one random data point is requested,
-            between [0, dims], otherwise do mini-batch. `dims` is the number of
-            observations. Default is False
+        and
+        Yegenoglu et al. (2020), Ensemble Kalman Filter optimizing
+        Deep Neural Networks: An alternative approach to non-performing
+        Gradient Descent
+        doi: 10.1007/978-3-030-64580-9_7
+
         """
         self.Cpp = None
         self.Cup = None
@@ -63,7 +63,7 @@ class EnsembleKalmanFilter:
         model_output = np.array(model_output)
         # Calculate the covariances
         self.Cpp = _cov_mat(model_output, model_output, ensemble_size)
-        self.Cup = _cov_mat(self.ensemble, model_output.T, ensemble_size)
+        self.Cup = _cov_mat(self.ensemble, model_output, ensemble_size)
         self.ensemble = _update_step(self.ensemble,
                                      observations,
                                      model_output, self.gamma,
@@ -84,14 +84,14 @@ def _update_step(ensemble, observations, g, gamma, Cpp, Cup):
     Update step of the kalman filter
     Calculates the covariances and returns new ensembles
     """
-    obs = (observations - g)
-    cpp_gamma = Cpp + gamma
-    s = np.linalg.solve(cpp_gamma, obs.T)
-    print(f's {s.mean()}')
-    r = Cup @ s.T
-    print(f'r {r.mean()}')
-    return r + ensemble
-    # return (Cup @ np.linalg.solve(Cpp+gamma, (observations-g).T)).T + ensemble
+    # obs = (observations - g)
+    # cpp_gamma = Cpp + gamma
+    # s = np.linalg.solve(cpp_gamma, obs.T)
+    # print(f's {s.mean()}')
+    # r = Cup @ s.T
+    # print(f'r {r.mean()}')
+    # return r + ensemble
+    return (Cup @ np.linalg.solve(Cpp+gamma, (observations-g).T)).T + ensemble
 
 
 def _cov_mat(x, y, ensemble_size):
@@ -99,4 +99,4 @@ def _cov_mat(x, y, ensemble_size):
     Covariance matrix
     """
     return np.tensordot((x - x.mean(0)), (y - y.mean(0)),
-                        axes=0) / ensemble_size
+                        axes=(0, 0)) / ensemble_size
