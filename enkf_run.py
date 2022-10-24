@@ -1,8 +1,9 @@
-import numpy as np
-import matplotlib.pyplot as plt
-
-from enkf import EnsembleKalmanFilter
 from numpy.random import default_rng
+from enkf import EnsembleKalmanFilter
+
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.io as sio
 
 
 '''
@@ -67,7 +68,12 @@ if __name__ == '__main__':
         # print(f'r mean {r.mean()} r norm {y_i}')
         xs.append(x)
         ys.append(y_i)
+    # for the pareto front
+    matfile = sio.loadmat('matlab_codes/ParetoFronts.mat', simplify_cells=True)
+    pf1 = matfile['Pf1']
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    plt.plot(xs, ys, '.')
+    plt.plot(xs, ys, '.', markersize=10)
+    plt.plot(pf1[:, 0], pf1[:, 1], c='r')
+    plt.savefig('pareto_result.png', bbox_inches='tight', pad_inches=0.1)
     plt.show()
